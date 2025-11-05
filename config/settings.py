@@ -38,9 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-
-    
     'api',
+    'accounts',
     'gallery',
     'course',
 ]
@@ -86,14 +85,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # }
 # 
 # DATABASES = {
-    # 'default': {
-        # 'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': 'eumydb',
-        # 'USER': 'postgres',
-        # 'PASSWORD': '123',
-        # 'HOST': 'localhost',
-        # 'PORT': '5432',
-    # }
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'eumydb',
+#         'USER': 'postgres',
+#         'PASSWORD': '123',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
 # }
 # 
 
@@ -115,9 +114,7 @@ else:
             'PASSWORD': config('DB_PASSWORD'),
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default='5432'),
-            'OPTIONS': {
-                'charset': 'utf8',
-            },
+            
             'CONN_MAX_AGE': 60,
         }
     }
@@ -183,3 +180,9 @@ SIMPLE_JWT = {
 STATIC_URL = 'static/'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR/'media'
+
+AUTH_USER_MODEL = "accounts.User"
+
+# Use console backend for testing
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "no-reply@example.com"
