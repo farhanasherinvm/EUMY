@@ -4,10 +4,16 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import*
 from .serializers import*
+from rest_framework.permissions import IsAdminUser, AllowAny
 
 
 
 class CourseListCreate(APIView):
+    
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAdminUser()]
 
     def get(self, request):
         courses = Course.objects.all().order_by('-created_at')
@@ -39,6 +45,7 @@ class CourseListCreate(APIView):
 
 
 class CourseUpdateDelete(APIView):
+    permission_classes = [IsAdminUser] 
 
     def put(self, request, course_id):
         try:
@@ -88,6 +95,10 @@ class CourseUpdateDelete(APIView):
         }, status=status.HTTP_200_OK)
 
 class SubCourseListCreate(APIView):
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAdminUser()]
 
     def post(self, request, course_id):
         serializer = SubCourseSerializer(data=request.data)
@@ -110,6 +121,7 @@ class SubCourseListCreate(APIView):
 
 
 class SubCourseUpdateDelete(APIView):
+    permission_classes = [IsAdminUser]
 
     def put(self, request, sub_id):
         try:
@@ -159,6 +171,7 @@ class SubCourseUpdateDelete(APIView):
 
 
 class Courseget(APIView):
+    permission_classes = [AllowAny] 
 
     def get(self, request, course_id):
         try:

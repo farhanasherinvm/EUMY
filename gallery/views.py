@@ -2,6 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAdminUser, AllowAny
 from .models import GalleryImage
 from .serializers import GalleryImageSerializer
 
@@ -10,6 +11,11 @@ from .serializers import GalleryImageSerializer
 
 
 class GalleryListCreateView(APIView):
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAdminUser()]
+
     def get(self, request):
         images = GalleryImage.objects.all()
         serializer = GalleryImageSerializer(images, many=True)
@@ -30,6 +36,7 @@ class GalleryListCreateView(APIView):
         return Response(created, status=status.HTTP_201_CREATED)
     
 class GalleryDetailView(APIView):
+    permission_classes = [IsAdminUser] 
     def delete(self, request, id):
         try:
             image = GalleryImage.objects.get(id=id)
