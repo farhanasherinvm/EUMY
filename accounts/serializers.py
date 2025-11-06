@@ -5,7 +5,9 @@ import random, datetime
 from django.utils import timezone
 from django.core.mail import send_mail
 import random
-
+from .models import TeamMember
+from .models import Review
+from .models import Student
 class SignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
@@ -72,3 +74,31 @@ class LoginSerializer(serializers.Serializer):
         if not user.is_active:
             raise serializers.ValidationError("Please verify your account first")
         return user
+
+
+
+class TeamMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeamMember
+        fields = '__all__'
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    # Combine first and last name from the user model
+    user_name = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Review
+        fields = ['id', 'user', 'user_name', 'title', 'description', 'rating', 'created_at']
+        read_only_fields = ['user', 'created_at']
+
+    def get_user_name(self, obj):
+        # Assuming your CustomUser model has 'fname' and 'lname' fields
+        return f"{obj.user.fname} {obj.user.lname}".strip()
+
+
+
+class StudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        fields = ['id', 'name', 'course', 'fee_details', 'status', 'date_of_joining']

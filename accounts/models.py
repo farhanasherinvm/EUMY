@@ -1,9 +1,9 @@
 from django.db import models
-
-# Create your models here.
-from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils import timezone
+from django.conf import settings
+from datetime import date
+
 
 class UserManager(BaseUserManager):
     def create_user(self, email, fname, lname, password=None):
@@ -45,3 +45,41 @@ class User(AbstractBaseUser):
     @property
     def is_staff(self):
         return self.is_admin
+
+
+class TeamMember(models.Model):
+    photo = models.ImageField(upload_to='team_photos/', null=True, blank=True)
+    name = models.CharField(max_length=100)
+    qualification = models.CharField(max_length=200)
+    batches = models.CharField(max_length=100)
+    role = models.CharField(max_length=100)
+    date_of_joining = models.DateField(auto_now_add=True)
+    def __str__(self):
+        return self.name
+
+
+class Review(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    rating = models.PositiveIntegerField(default=1)  # 1–5 stars
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.rating})"
+
+
+class Student(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('fee_assigned', 'Fee Assigned'),
+    ]
+
+    name = models.CharField(max_length=100)
+    course = models.CharField(max_length=100)
+    fee_details = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    date_of_joining = models.DateField(default=date.today)
+
+    def __str__(self):
+        return self.name
