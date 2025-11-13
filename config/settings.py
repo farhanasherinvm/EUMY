@@ -25,8 +25,17 @@ SECRET_KEY = 'django-insecure-+#t1)t3mr70(c@9teliaega=3gp87j^vxi0i&f^)*c!&gy3&3$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
 
+ALLOWED_HOSTS = ["eumy-academy-bckend.onrender.com", '127.0.0.1:8000', '127.0.0.1', 'localhost']
+
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173", 
+    "http://127.0.0.1:5173",
+    "https://eumy-academy-bckend.onrender.com"
+    # Add your deployed frontend URL here when you have one (e.g., "https://your-frontend-domain.com")
+]
 
 # Application definition
 
@@ -37,17 +46,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework',
     'api',
     'accounts',
     'gallery',
     'course',
+    'teachers',
+    'dashboard'
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -72,54 +85,62 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
-
-
+# LANGUAGE_CODE = 'en-us' # or 'en-in'
+# USE_I18N = True 
+# USE_L10N = True # Make sure this is True
+# USE_TZ = True
+# TIME_ZONE = 'Asia/Kolkata' # <--- THIS MUST BE THE FINAL VALUE
+LANGUAGE_CODE = 'en-us'
+USE_I18N = True 
+USE_L10N = True # Keep this line
+USE_TZ = True
+TIME_ZONE = 'Asia/Kolkata'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+ 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
+# if DEBUG:
+#     # Development database - SQLite
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': BASE_DIR / 'db.sqlite3',
+#         }
 #     }
-# }
-# 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'eumydb',
-#         'USER': 'postgres',
-#         'PASSWORD': '123',
-#         'HOST': 'localhost',
-#         'PORT': '5432',
-#     }
-# }
-# 
-
-if DEBUG:
-    # Development database - SQLite
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-else:
-    # Production database - PostgreSQL
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME', default='recharge_backend'),
-            'USER': config('DB_USER', default='recharge_user'),
-            'PASSWORD': config('DB_PASSWORD'),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='5432'),
+# else:
+#     # Production database - PostgreSQL
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': config('DB_NAME', default='recharge_backend'),
+#             'USER': config('DB_USER', default='recharge_user'),
+#             'PASSWORD': config('DB_PASSWORD'),
+#             'HOST': config('DB_HOST', default='localhost'),
+#             'PORT': config('DB_PORT', default='5432'),
             
-            'CONN_MAX_AGE': 60,
+#             'CONN_MAX_AGE': 60,
+#         }
+#     }
+
+# Production database - PostgreSQL
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'neondb',
+        'USER': 'neondb_owner',
+        'PASSWORD': 'npg_d7E2sRDSoGuy',
+        'HOST': 'ep-divine-violet-a41lqcey-pooler.us-east-1.aws.neon.tech',
+        'PORT': '5432',
+        
+        'CONN_MAX_AGE': 60,
+        # The 'sslmode=require' is a crucial parameter for Neon and is passed via OPTIONS
+        'OPTIONS': {
+            'sslmode': 'require',
+            # Other query parameters like 'channel_binding=require' are often handled
+            # automatically or can be omitted, but 'sslmode' is essential.
         }
     }
-
-
+}
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -142,13 +163,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# TIME_ZONE = 'UTC'
 
-USE_I18N = True
+# USE_I18N = True
 
-USE_TZ = True
+# USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
@@ -169,7 +190,8 @@ from datetime import timedelta
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ]
+    ],
+    'DATETIME_FORMAT': "%Y-%m-%d %H:%M:%S%z",
 }
 
 SIMPLE_JWT = {

@@ -13,7 +13,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Review
 from .serializers import ReviewSerializer
 from openpyxl import Workbook
-
+from .pagination import TeamMemberPagination
 
 from django.db.models import Q
 from .models import Student
@@ -55,6 +55,7 @@ class LoginView(APIView):
         return Response(serializer.errors, status=400)
 
 class TeamListCreateView(APIView):
+    pagination_class = TeamMemberPagination
     def get_permissions(self):
         if self.request.method == 'GET':
             return [AllowAny()]
@@ -62,8 +63,19 @@ class TeamListCreateView(APIView):
 
     def get(self, request):
         members = TeamMember.objects.all().order_by('id')
-        serializer = TeamMemberSerializer(members, many=True)
-        return Response(serializer.data)
+        # 🌟 PAGINATION LOGIC 🌟
+        paginator = self.pagination_class()
+        
+        # 1. Paginate the queryset
+        page = paginator.paginate_queryset(members, request, view=self)
+        
+        if page is not None:
+            # 2. Serialize the paginated data (the current page)
+            serializer = TeamMemberSerializer(page, many=True)
+            # 3. Return the standard paginated response (includes links, count, etc.)
+            return paginator.get_paginated_response(serializer.data)
+        # serializer = TeamMemberSerializer(members, many=True)
+        # return Response(serializer.data)
 
     def post(self, request):
         serializer = TeamMemberSerializer(data=request.data)

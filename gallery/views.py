@@ -8,7 +8,8 @@ from .serializers import GalleryImageSerializer
 
 # Create your views here.
 
-
+    
+    
 
 class GalleryListCreateView(APIView):
     def get_permissions(self):
