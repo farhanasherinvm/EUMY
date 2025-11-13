@@ -5,23 +5,41 @@ from rest_framework import status
 from rest_framework.permissions import IsAdminUser, AllowAny
 from .models import GalleryImage
 from .serializers import GalleryImageSerializer
-
+from .pagination import GalleryPagination
 # Create your views here.
 
     
     
 
 class GalleryListCreateView(APIView):
+    pagination_class = GalleryPagination
     def get_permissions(self):
         if self.request.method == "GET":
             return [AllowAny()]
         return [IsAdminUser()]
 
+    # def get(self, request):
+    #     images = GalleryImage.objects.all()
+    #     serializer = GalleryImageSerializer(images, many=True)
+    #     return Response(serializer.data)
     def get(self, request):
-        images = GalleryImage.objects.all()
+        images = GalleryImage.objects.all().order_by('id')
+        # serializer = GalleryImageSerializer(images, many=True)
+        # return Response(serializer.data)
+        paginator = self.pagination_class()
+        
+        # 1. Paginate the queryset, returning only the current page's objects
+        page = paginator.paginate_queryset(images, request, view=self)
+        
+        if page is not None:
+            # 2. Serialize the current page data
+            serializer = GalleryImageSerializer(page, many=True)
+            # 3. Return the paginated response (includes links, count, etc.)
+            return paginator.get_paginated_response(serializer.data)
+
+        # Fallback (in case pagination fails)
         serializer = GalleryImageSerializer(images, many=True)
         return Response(serializer.data)
-
     def post(self, request):
         files = request.FILES.getlist('images')  
         created = []
