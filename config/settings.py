@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
+    'cloudinary_storage',
+    'cloudinary',
     'api',
     'accounts',
     'gallery',
@@ -175,8 +177,23 @@ AUTH_PASSWORD_VALIDATORS = [
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
 
+CLOUDINARY_CLOUD_NAME = "dhijdahsr"
+CLOUDINARY_API_KEY = "564455637734459"
+CLOUDINARY_API_SECRET = "kwkolre9ZLWP8MNgvbYWE703bfQ"
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dhijdahsr',
+    'API_KEY': '564455637734459',
+    'API_SECRET': 'kwkolre9ZLWP8MNgvbYWE703bfQ',
+}
+# Set Cloudinary as the default storage backend for media files
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# ------------------ STATIC FILES ------------------
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -199,9 +216,6 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
-STATIC_URL = 'static/'
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR/'media'
 
 AUTH_USER_MODEL = "accounts.User"
 

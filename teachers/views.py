@@ -37,11 +37,10 @@ class TeacherAttendanceViewSet(viewsets.GenericViewSet):
         # request.user is the authenticated User object (the Teacher)
         return AttendanceRecord.objects.filter(teacher=self.request.user)
     # 1. New: List all attendance records for the teacher
-    # def list(self, request):
+    def list(self, request):
     #     queryset = self.get_queryset().filter(punch_out_time__isnull=False) # Only display complete records
     #     serializer = self.get_serializer(queryset, many=True)
     #     return Response(serializer.data)
-    def list(self, request):
         queryset = self.get_queryset() 
         
         # You may want to order them by most recent first

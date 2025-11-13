@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 # from .models import User  <- Assuming User is defined elsewhere or imported via settings
-
+from cloudinary_storage.storage import MediaCloudinaryStorage
 class AttendanceRecord(models.Model):
     # Link to the Teacher/User who is punching in
     teacher = models.ForeignKey(
@@ -15,7 +15,7 @@ class AttendanceRecord(models.Model):
     punch_out_time = models.DateTimeField(null=True, blank=True)
     # The uploaded selfie image
     punch_in_selfie = models.ImageField(
-        upload_to='attendance_selfies/%Y/%m/%d/',
+        upload_to='attendance_selfies/%Y/%m/%d/',default="", storage=MediaCloudinaryStorage(),
         help_text='Selfie taken at the time of punch-in.'
     )
     working_duration = models.DurationField(null=True, blank=True)

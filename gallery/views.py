@@ -18,10 +18,6 @@ class GalleryListCreateView(APIView):
             return [AllowAny()]
         return [IsAdminUser()]
 
-    # def get(self, request):
-    #     images = GalleryImage.objects.all()
-    #     serializer = GalleryImageSerializer(images, many=True)
-    #     return Response(serializer.data)
     def get(self, request):
         images = GalleryImage.objects.all().order_by('id')
         # serializer = GalleryImageSerializer(images, many=True)
@@ -40,6 +36,7 @@ class GalleryListCreateView(APIView):
         # Fallback (in case pagination fails)
         serializer = GalleryImageSerializer(images, many=True)
         return Response(serializer.data)
+
     def post(self, request):
         files = request.FILES.getlist('images')  
         created = []

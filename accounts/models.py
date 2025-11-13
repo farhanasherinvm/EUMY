@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager,Permiss
 from django.utils import timezone
 from django.conf import settings
 from datetime import date
-
+from cloudinary_storage.storage import MediaCloudinaryStorage
 
 class UserManager(BaseUserManager):
     def create_user(self, email, fname, lname, password=None):
@@ -107,7 +107,7 @@ class User(AbstractBaseUser, PermissionsMixin): # <-- CHANGE THIS LINE
         return self.is_admin # All admins can view all app modules
 # ---------------------------------------------------------------------
 class TeamMember(models.Model):
-    photo = models.ImageField(upload_to='team_photos/', null=True, blank=True)
+    photo = models.ImageField(upload_to='team_photos/', default="", storage=MediaCloudinaryStorage(), null=True, blank=True)
     name = models.CharField(max_length=100)
     qualification = models.CharField(max_length=200)
     batches = models.CharField(max_length=100)
