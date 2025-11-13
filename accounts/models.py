@@ -142,3 +142,13 @@ class Student(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Image(models.Model):
+    title = models.CharField(max_length=100, default="Untitled")
+    image = models.ImageField(upload_to="uploads/")
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title

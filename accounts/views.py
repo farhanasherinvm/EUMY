@@ -14,6 +14,7 @@ from .models import Review
 from .serializers import ReviewSerializer
 from openpyxl import Workbook
 from .pagination import TeamMemberPagination
+from .serializers import ForgotPasswordSerializer
 
 from django.db.models import Q
 from .models import Student
@@ -25,6 +26,18 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from django.http import HttpResponse
+from .serializers import ResetPasswordSerializer
+from .serializers import ChangePasswordSerializer
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.utils import timezone
+from django.core.mail import send_mail
+from django.conf import settings
+from datetime import timedelta
+from .models import User
+import random
 
 class SignupView(APIView):
     def post(self, request):
@@ -63,6 +76,27 @@ class TeamListCreateView(APIView):
 
     def get(self, request):
         members = TeamMember.objects.all().order_by('id')
+
+         # --- Search filters ---
+        search = request.query_params.get('search', None)
+        from_date = request.query_params.get('from_date', None)
+        end_date = request.query_params.get('end_date', None)
+
+        if search:
+            members = members.filter(
+                Q(name__icontains=search)
+                | Q(qualification__icontains=search)
+                | Q(batches__icontains=search)
+                | Q(role__icontains=search)
+            )
+
+        # --- Date range filter ---
+        if from_date and end_date:
+            members = members.filter(date_of_joining__range=[from_date, end_date])
+        elif from_date:
+            members = members.filter(date_of_joining__gte=from_date)
+        elif end_date:
+            members = members.filter(date_of_joining__lte=end_date)
         # 🌟 PAGINATION LOGIC 🌟
         paginator = self.pagination_class()
         
@@ -76,7 +110,8 @@ class TeamListCreateView(APIView):
             return paginator.get_paginated_response(serializer.data)
         # serializer = TeamMemberSerializer(members, many=True)
         # return Response(serializer.data)
-
+        serializer = TeamMemberSerializer(members, many=True)
+        return Response(serializer.data)
     def post(self, request):
         serializer = TeamMemberSerializer(data=request.data)
         if serializer.is_valid():
@@ -390,3 +425,109 @@ class ExportStudentsPDF(APIView):
 
         pdf.build([Paragraph("Student Report", styles['Heading1']), table])
         return response
+
+
+# views.py
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from .models import Image
+from .serializers import ImageSerializer
+from .permissions import IsAdminOrReadOnly
+
+class ImageViewSet(viewsets.ModelViewSet):
+    queryset = Image.objects.all().order_by('-uploaded_at')
+    serializer_class = ImageSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(uploaded_by=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        """
+        Allow multiple image uploads in one request.
+        """
+        images = request.FILES.getlist('images')  # multiple files
+        title = request.data.get('title', 'Untitled')
+
+        if not images:
+            return Response({'error': 'No images provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        image_objects = []
+        for img in images:
+            image_obj = Image.objects.create(
+                title=title,
+                image=img,
+                uploaded_by=request.user
+            )
+            image_objects.append(image_obj)
+
+        serializer = self.get_serializer(image_objects, many=True)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class ForgotPasswordView(APIView):
+    def post(self, request):
+        serializer = ForgotPasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "OTP sent to your email"}, status=200)
+        return Response(serializer.errors, status=400)
+
+
+class ResetPasswordView(APIView):
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Password reset successful"}, status=200)
+        return Response(serializer.errors, status=400)
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Password changed successfully"}, status=200)
+        return Response(serializer.errors, status=400)
+
+
+
+
+class ResendOTPView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+
+        if not email:
+            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "User with this email does not exist"}, status=status.HTTP_404_NOT_FOUND)
+
+          # ✅ Check if OTP is still valid (5 minutes)
+        if user.otp_created_at and timezone.now() - user.otp_created_at < timedelta(minutes=5):
+            remaining = 300 - int((timezone.now() - user.otp_created_at).seconds)
+            return Response(
+                {"error": f"OTP already sent. Please wait {remaining} seconds before requesting a new one."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+
+        # ✅ Generate new OTP
+        otp = str(random.randint(100000, 999999))
+        user.otp = otp
+        user.otp_created_at = timezone.now()
+        user.save()
+
+        # ✅ Send OTP via email
+        send_mail(
+            subject="Your OTP Code",
+            message=f"Your OTP is {otp}. It will expire in 5 minutes.",
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+
+        return Response({"message": "OTP resent successfully"}, status=status.HTTP_200_OK)

@@ -8,6 +8,12 @@ import random
 from .models import TeamMember
 from .models import Review
 from .models import Student
+
+from .models import Image
+
+from django.utils.crypto import get_random_string
+
+
 class SignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
@@ -102,3 +108,86 @@ class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = ['id', 'name', 'course', 'fee_details', 'status', 'date_of_joining']
+
+
+from .models import Image
+
+class ImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Image
+        fields = ['id', 'title','image', 'uploaded_by', 'uploaded_at']
+        read_only_fields = ['uploaded_by', 'uploaded_at']
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("No user found with this email.")
+        return value
+
+    def create(self, validated_data):
+        """
+        Called when .save() is used in the view.
+        """
+        email = validated_data['email']
+        user = User.objects.get(email=email)
+
+        otp = get_random_string(length=6, allowed_chars='1234567890')
+        user.otp = otp
+        user.otp_created_at = timezone.now()
+        user.save()
+
+        send_mail(
+            subject="Password Reset OTP",
+            message=f"Hello {user.fname},\n\nYour OTP for password reset is: {otp}",
+            from_email="zecserbusiness@gmail.com",
+            recipient_list=[email],
+            fail_silently=False,
+        )
+        return user
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField()
+    new_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        if data["new_password"] != data["confirm_password"]:
+            raise serializers.ValidationError("Passwords do not match")
+
+        try:
+            user = User.objects.get(email=data["email"], otp=data["otp"])
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Invalid OTP or email")
+
+        return data
+
+    def save(self):
+        user = User.objects.get(email=self.validated_data["email"])
+        user.set_password(self.validated_data["new_password"])
+        user.otp = None
+        user.save()
+        return user
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        user = self.context["request"].user
+        if not user.check_password(data["old_password"]):
+            raise serializers.ValidationError("Old password is incorrect")
+        if data["new_password"] != data["confirm_password"]:
+            raise serializers.ValidationError("Passwords do not match")
+        return data
+
+    def save(self):
+        user = self.context["request"].user
+        user.set_password(self.validated_data["new_password"])
+        user.save()
+        return user
+
+

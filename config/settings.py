@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'multiselectfield',
     'rest_framework',
     'cloudinary_storage',
     'cloudinary',
