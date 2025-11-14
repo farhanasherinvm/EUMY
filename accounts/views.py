@@ -15,6 +15,8 @@ from .serializers import ReviewSerializer
 from openpyxl import Workbook
 from .pagination import TeamMemberPagination
 from .serializers import ForgotPasswordSerializer
+from .models import Profile
+from .serializers import ProfileSerializer
 
 from django.db.models import Q
 from .models import Student
@@ -531,3 +533,29 @@ class ResendOTPView(APIView):
         )
 
         return Response({"message": "OTP resent successfully"}, status=status.HTTP_200_OK)
+
+# accounts/views.py
+
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        profile, created = Profile.objects.get_or_create(user=request.user)
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data, status=200)
+
+    def put(self, request):
+        profile = Profile.objects.get(user=request.user)
+        serializer = ProfileSerializer(profile, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+
+    def patch(self, request):
+        profile = Profile.objects.get(user=request.user)
+        serializer = ProfileSerializer(profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)

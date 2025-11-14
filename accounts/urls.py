@@ -2,7 +2,7 @@ from django.urls import path,include
 from rest_framework.routers import DefaultRouter
 from .views import (SignupView, VerifyOTPView, LoginView,TeamListCreateView, TeamDetailView,ReviewListCreateView, ReviewDetailView,
     StudentListCreateView, StudentDetailView,
-    ExportStudentsCSV, ExportStudentsExcel, ExportStudentsPDF,ImageViewSet,ForgotPasswordView, ResetPasswordView, ChangePasswordView,ResendOTPView
+    ExportStudentsCSV, ExportStudentsExcel, ExportStudentsPDF,ImageViewSet,ForgotPasswordView, ResetPasswordView, ChangePasswordView,ResendOTPView,ProfileView
 )
 
 router = DefaultRouter()
@@ -12,6 +12,7 @@ urlpatterns = [
     path("signup/", SignupView.as_view()),
     path("verify-otp/", VerifyOTPView.as_view()),
     path("login/", LoginView.as_view()),
+    path("profile/", ProfileView.as_view(), name="profile"),
     path('forgot-password/', ForgotPasswordView.as_view()),
     path('reset-password/', ResetPasswordView.as_view()),
     path('change-password/', ChangePasswordView.as_view()),

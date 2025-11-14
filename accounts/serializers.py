@@ -8,6 +8,7 @@ import random
 from .models import TeamMember
 from .models import Review
 from .models import Student
+from accounts.models import Profile
 
 from .models import Image
 
@@ -41,6 +42,10 @@ class SignupSerializer(serializers.ModelSerializer):
         user.otp_created_at = datetime.datetime.now()
         user.is_active = False
         user.save()
+
+        from accounts.models import Profile
+
+        Profile.objects.create(user=user)
 
         # Send OTP to email (console backend or real email if configured)
         send_mail(
@@ -171,6 +176,7 @@ class ResetPasswordSerializer(serializers.Serializer):
         user.otp = None
         user.save()
         return user
+
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(write_only=True)
     new_password = serializers.CharField(write_only=True)
@@ -190,4 +196,24 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.save()
         return user
 
+# accounts/serializers.py
+
+class ProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source="user.email", read_only=True)
+    fname = serializers.CharField(source="user.fname", read_only=True)
+    lname = serializers.CharField(source="user.lname", read_only=True)
+    phone_number = serializers.CharField(source="user.phone_number", read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = [
+            "email",
+            "fname",
+            "lname",
+            "phone_number",
+            "bio",
+            "address",
+            "dob",
+            "profile_picture",
+        ]
 
