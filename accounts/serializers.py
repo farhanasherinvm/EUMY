@@ -200,9 +200,9 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source="user.email", read_only=True)
-    fname = serializers.CharField(source="user.fname", read_only=True)
-    lname = serializers.CharField(source="user.lname", read_only=True)
-    phone_number = serializers.CharField(source="user.phone_number", read_only=True)
+    fname = serializers.CharField(source="user.fname", required=False)
+    lname = serializers.CharField(source="user.lname", required=False)
+    phone_number = serializers.CharField(source="user.phone_number", required=False)
 
     class Meta:
         model = Profile
@@ -216,4 +216,15 @@ class ProfileSerializer(serializers.ModelSerializer):
             "dob",
             "profile_picture",
         ]
+    def update(self, instance, validated_data):
+        # update user fields
+        user_data = validated_data.pop("user", {})
+
+        user = instance.user
+        for attr, value in user_data.items():
+            setattr(user, attr, value)
+        user.save()
+
+        # update profile fields
+        return super().update(instance, validated_data)
 
